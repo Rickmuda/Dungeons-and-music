@@ -1,7 +1,15 @@
 <template>
   <div id="app">
-    <header>
-      <h1>Dungeon Music Player</h1>
+    <header class="header-grid">
+        <!-- Left Block: YouTube Video for Scenes -->
+        <div class="youtube-player" ref="songPlayerContainer"></div>
+
+        <!-- Middle Block: Title -->
+        <h1>Dungeons And Music</h1>
+
+        <!-- Right Block: YouTube Video for Sound Effects -->
+        <div class="youtube-player" ref="effectPlayerContainer"></div>
+
     </header>
     <main>
       <!-- Left Side: Song Selector -->
@@ -34,27 +42,6 @@
         </div>
       </div>
     </main>
-
-    <!-- Footer: YouTube Players -->
-    <footer class="audio-controls">
-      <h3>Audio Controls</h3>
-      <div class="youtube-players">
-        <iframe
-          v-if="currentSongYouTubeId"
-          :src="`https://www.youtube.com/embed/${currentSongYouTubeId}?autoplay=1`"
-          frameborder="0"
-          allow="autoplay; encrypted-media"
-          allowfullscreen
-        ></iframe>
-        <iframe
-          v-if="currentEffectYouTubeId"
-          :src="`https://www.youtube.com/embed/${currentEffectYouTubeId}?autoplay=1`"
-          frameborder="0"
-          allow="autoplay; encrypted-media"
-          allowfullscreen
-        ></iframe>
-      </div>
-    </footer>
   </div>
 </template>
 
@@ -64,8 +51,8 @@ import './App.css'; // Import the CSS file
 export default {
   data() {
     return {
-      currentSongYouTubeId: null, // Holds the currently playing YouTube video ID for songs
-      currentEffectYouTubeId: null, // Holds the currently playing YouTube video ID for sound effects
+      songPlayer: null, // YouTube player for songs
+      effectPlayer: null, // YouTube player for sound effects
       scenes: [
         { name: 'Tavern', image: require('@/assets/img/scenes/tavern.png'), youtubeId: 'vyg5jJrZ42s' },
         { name: 'Battle', image: require('@/assets/img/scenes/battle.png'), youtubeId: 'sd1Otp7s1Fk' },
@@ -87,21 +74,51 @@ export default {
     };
   },
   methods: {
+    loadYouTubeAPI() {
+      if (!window.YT) {
+        const tag = document.createElement('script');
+        tag.src = 'https://www.youtube.com/iframe_api';
+        const firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+      } else {
+        this.onYouTubeIframeAPIReady();
+      }
+    },
+    onYouTubeIframeAPIReady() {
+      this.songPlayer = new window.YT.Player(this.$refs.songPlayerContainer, {
+        height: '100',
+        width: '300',
+        events: {
+          onReady: (event) => {
+            event.target.setVolume(20); // Set volume to 20%
+          },
+        },
+      });
+
+      this.effectPlayer = new window.YT.Player(this.$refs.effectPlayerContainer, {
+        height: '100',
+        width: '300',
+        events: {
+          onReady: (event) => {
+            event.target.setVolume(20); // Set volume to 20%
+          },
+        },
+      });
+    },
     switchSong(youtubeId) {
-      this.currentSongYouTubeId = youtubeId; // Set the current YouTube video ID for songs
+      if (this.songPlayer) {
+        this.songPlayer.loadVideoById(youtubeId);
+      }
     },
     playSoundEffect(youtubeId) {
-      this.currentEffectYouTubeId = youtubeId; // Set the current YouTube video ID for sound effects
+      if (this.effectPlayer) {
+        this.effectPlayer.loadVideoById(youtubeId);
+      }
     },
+  },
+  mounted() {
+    this.loadYouTubeAPI();
+    window.onYouTubeIframeAPIReady = this.onYouTubeIframeAPIReady;
   },
 };
 </script>
-
-<style>
-/* Add your styles here */
-.audio-controls .youtube-players iframe {
-  width: 100%;
-  height: 150px;
-  margin-bottom: 10px;
-}
-</style>
